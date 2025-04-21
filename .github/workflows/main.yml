@@ -1,0 +1,123 @@
+name: Alerta Meteorológica Automática
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Cada 30 minutos
+  workflow_dispatch:
+
+jobs:
+  alerta-meteorologica:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar dependencias
+        run: pip install requests beautifulsoup4 shapely folium
+
+      - name: Ejecutar verificador de alertas
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
+        run: |
+          python <<EOF
+          import requests
+          from bs4 import BeautifulSoup
+          from shapely.geometry import Point, Polygon
+          from email.message import EmailMessage
+          import smtplib
+          import folium
+          import os
+
+          # Coordenadas de ciudades
+          ciudades = {
+              "Chos Malal": (-37.377, -70.270),
+              "Andacollo": (-37.15, -70.983),
+              "Loncopué": (-38.066, -70.616),
+              "Las Lajas": (-38.517, -70.375),
+              "Aluminé": (-39.233, -71.417),
+              "Junín de los Andes": (-39.950, -71.083),
+              "San Martín de los Andes": (-40.157, -71.353),
+              "Chapelco": (-40.075, -71.137),
+              "Bariloche": (-41.133, -71.310),
+          }
+
+          GMAIL_USER = os.environ.get("GMAIL_USER")
+          GMAIL_PASS = os.environ.get("GMAIL_PASS")
+
+          feed_url = "https://ssl.smn.gob.ar/CAP/AR.php"
+          feed_resp = requests.get(feed_url)
+          feed = BeautifulSoup(feed_resp.content, "xml")
+
+          alert_links = [link.text for link in feed.find_all("link") if "CAP_" in link.text and link.text.endswith(".xml")]
+
+          for xml_url in alert_links:
+              print(f"Procesando: {xml_url}")
+              xml = requests.get(xml_url)
+              xml_soup = BeautifulSoup(xml.content, "xml")
+
+              description_tag = xml_soup.find("description")
+              descripcion = description_tag.text.strip() if description_tag else "(Sin descripción)"
+              event = xml_soup.find("event")
+              evento = event.text if event else "Alerta"
+
+              mapa = folium.Map(location=[-40, -70], zoom_start=5, tiles="CartoDB positron")
+              poligono_afecta_ciudad = False
+              ciudad_afectada = None
+
+              for area in xml_soup.find_all("area"):
+                  polygon_tag = area.find("polygon")
+                  if polygon_tag and polygon_tag.text.strip():
+                      try:
+                          coords = []
+                          for pair in polygon_tag.text.strip().split():
+                              lat, lon = map(float, pair.split(','))
+                              coords.append((lat, lon))
+
+                          if len(coords) >= 3:
+                              poligono = Polygon([(lon, lat) for lat, lon in coords])
+                              folium.Polygon(
+                                  locations=coords,
+                                  color="red",
+                                  fill=True,
+                                  fill_opacity=0.4,
+                                  tooltip=evento
+                              ).add_to(mapa)
+
+                              for ciudad, (lat, lon) in ciudades.items():
+                                  punto = Point(lon, lat)
+                                  if poligono.contains(punto):
+                                      ciudad_afectada = ciudad
+                                      poligono_afecta_ciudad = True
+                      except Exception as e:
+                          print(f"Error procesando polígono: {e}")
+
+              if poligono_afecta_ciudad:
+                  # Agregar marcadores de ciudades al mapa
+                  for nombre, (lat, lon) in ciudades.items():
+                      folium.Marker(
+                          location=(lat, lon),
+                          popup=nombre,
+                          tooltip=nombre,
+                          icon=folium.Icon(color="blue", icon="info-sign")
+                      ).add_to(mapa)
+
+                  mapa.save("mapa_alerta.html")
+
+                  # Leer mapa generado y convertirlo a HTML inline
+                  with open("mapa_alerta.html", "r", encoding="utf-8") as f:
+                      html_mapa = f.read()
+
+                  mensaje = EmailMessage()
+                  mensaje["Subject"] = f"🚨 {evento} en {ciudad_afectada}"
+                  mensaje["From"] = GMAIL_USER
+                  mensaje["To"] = GMAIL_USER
+                  mensaje.set_content(f"Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.\n\n{descripcion}\n\nMapa disponible solo en HTML adjunto.")
+                  mensaje.add_alternative(html_mapa, subtype="html")
+
+                  try:
+                      with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                          smtp.login(GMAIL_USER, GMAIL_PASS)
+                          smtp.send_message(mensaje)
+                      print(f"✅ Correo enviado por alerta en {ciudad_afectada}")
+                  except Exception as e:
+                      print(f"❌ Error al enviar correo: {e}")
+          EOF
