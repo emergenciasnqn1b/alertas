@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Instalar dependencias
-        run: pip install requests beautifulsoup4 shapely folium
+        run: pip install requests beautifulsoup4 shapely folium lxml
 
       - name: Ejecutar verificador de alertas
         env:
