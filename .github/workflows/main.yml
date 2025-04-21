@@ -20,7 +20,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y wget unzip python3-lxml python3-pip
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt install -y ./google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
+          sudo apt install -y ./google-chrome-stable_114.0.5735.90-1_amd64.deb || sudo apt --fix-broken install -y
           wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/135.0.7049.95/chromedriver_linux64.zip
           unzip -o /tmp/chromedriver.zip -d /usr/local/bin/
           chmod +x /usr/local/bin/chromedriver
