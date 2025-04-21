@@ -15,14 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Instalar dependencias y Chrome
+      - name: Instalar Google Chrome y ChromeDriver compatibles
         run: |
           sudo apt-get update
           sudo apt-get install -y wget unzip python3-lxml python3-pip
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt install -y ./google-chrome-stable_current_amd64.deb
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
+          CHROME_BIN=$(which google-chrome)
           CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
-          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip || true
+          DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%.*}")
+          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip
           unzip -o /tmp/chromedriver.zip -d /usr/local/bin/
           chmod +x /usr/local/bin/chromedriver
           pip install requests beautifulsoup4 shapely folium selenium lxml
