@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  alerta-meteorologica:
+  ejecutar-alerta:
     runs-on: ubuntu-latest
     env:
       GMAIL_USER: ${{ secrets.GMAIL_USER }}
@@ -15,17 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Instalar Google Chrome y ChromeDriver
+      - name: Instalar dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip python3-lxml python3-pip
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome-stable_114.0.5735.90-1_amd64.deb || sudo apt --fix-broken install -y
-          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/135.0.7049.95/chromedriver_linux64.zip
-          unzip -o /tmp/chromedriver.zip -d /usr/local/bin/
-          chmod +x /usr/local/bin/chromedriver
-          pip install requests beautifulsoup4 shapely folium selenium lxml
+          sudo apt-get install -y wget unzip python3-lxml python3-pip chromium
+          pip install requests beautifulsoup4 shapely folium selenium undetected-chromedriver lxml
 
-      - name: Ejecutar script de alertas
-        run: python .github/workflows/alertas_smn.py
+      - name: Ejecutar script
+        run: python alertas_smn.py
         
