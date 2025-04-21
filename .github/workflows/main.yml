@@ -2,30 +2,40 @@ name: Alerta Meteorológica Automática
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Cada 30 minutos
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
   alerta-meteorologica:
     runs-on: ubuntu-latest
+    env:
+      GMAIL_USER: ${{ secrets.GMAIL_USER }}
+      GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
 
     steps:
+      - uses: actions/checkout@v3
+
       - name: Instalar dependencias
-        run: pip install requests beautifulsoup4 shapely folium lxml
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-chromedriver
+          pip install requests beautifulsoup4 shapely folium selenium lxml
 
       - name: Ejecutar verificador de alertas
-        env:
-          GMAIL_USER: ${{ secrets.GMAIL_USER }}
-          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
         run: |
           python <<EOF
           import requests
           from bs4 import BeautifulSoup
           from shapely.geometry import Point, Polygon
-          from email.message import EmailMessage
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
+          from email.mime.image import MIMEImage
           import smtplib
-          import folium
           import os
+          import folium
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          import time
 
           ciudades = {
               "Chos Malal": (-37.377, -70.270),
@@ -107,25 +117,44 @@ jobs:
                       ).add_to(mapa)
 
                   mapa.save("mapa_alerta.html")
-                  with open("mapa_alerta.html", "r", encoding="utf-8") as f:
-                      html_mapa = f.read()
+
+                  # Captura imagen del HTML con Selenium
+                  chrome_options = Options()
+                  chrome_options.add_argument("--headless")
+                  chrome_options.add_argument("--no-sandbox")
+                  chrome_options.add_argument("--disable-dev-shm-usage")
+                  chrome_options.add_argument("--window-size=1200,800")
+                  driver = webdriver.Chrome(options=chrome_options)
+                  driver.get("file://" + os.path.abspath("mapa_alerta.html"))
+                  time.sleep(3)
+                  driver.save_screenshot("mapa_alerta.png")
+                  driver.quit()
 
                   descripcion_extra = descripciones_feed.get(xml_url, "(Sin descripción adicional)")
 
-                  mensaje = EmailMessage()
+                  # Armar correo con imagen incrustada
+                  mensaje = MIMEMultipart("related")
                   mensaje["Subject"] = f"🚨 {evento} en {ciudad_afectada}"
                   mensaje["From"] = GMAIL_USER
                   mensaje["To"] = GMAIL_USER
-                  mensaje.set_content(f"Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.\n\nDescripción:\n{descripcion_extra}\n\nEl mapa se incluye en la versión HTML del correo.")
-                  mensaje.add_alternative(f"""
-                  <html>
-                    <body>
-                      <p><strong>Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.</strong></p>
-                      <p><strong>Descripción:</strong><br>{descripcion_extra}</p>
-                      {html_mapa}
-                    </body>
-                  </html>
-                  """, subtype="html")
+
+                  cuerpo_html = f'''
+                    <html>
+                      <body>
+                        <p><strong>Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.</strong></p>
+                        <p><strong>Descripción:</strong><br>{descripcion_extra}</p>
+                        <img src="cid:mapa_alerta">
+                      </body>
+                    </html>
+                  '''
+
+                  parte_html = MIMEText(cuerpo_html, "html")
+                  mensaje.attach(parte_html)
+
+                  with open("mapa_alerta.png", "rb") as f:
+                      img = MIMEImage(f.read())
+                      img.add_header("Content-ID", "<mapa_alerta>")
+                      mensaje.attach(img)
 
                   try:
                       with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
@@ -135,3 +164,4 @@ jobs:
                   except Exception as e:
                       print(f"❌ Error al enviar correo: {e}")
           EOF
+
