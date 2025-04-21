@@ -27,7 +27,6 @@ jobs:
           import folium
           import os
 
-          # Coordenadas de ciudades
           ciudades = {
               "Chos Malal": (-37.377, -70.270),
               "Andacollo": (-37.15, -70.983),
@@ -47,15 +46,23 @@ jobs:
           feed_resp = requests.get(feed_url)
           feed = BeautifulSoup(feed_resp.content, "xml")
 
-          alert_links = [link.text for link in feed.find_all("link") if "CAP_" in link.text and link.text.endswith(".xml")]
+          alert_links = []
+          descripciones_feed = {}
+
+          for item in feed.find_all("item"):
+              link_tag = item.find("link")
+              desc_tag = item.find("description")
+              if link_tag and desc_tag:
+                  link = link_tag.text.strip()
+                  descripcion = desc_tag.text.strip()
+                  alert_links.append(link)
+                  descripciones_feed[link] = descripcion
 
           for xml_url in alert_links:
               print(f"Procesando: {xml_url}")
               xml = requests.get(xml_url)
               xml_soup = BeautifulSoup(xml.content, "xml")
 
-              description_tag = xml_soup.find("description")
-              descripcion = description_tag.text.strip() if description_tag else "(Sin descripción)"
               event = xml_soup.find("event")
               evento = event.text if event else "Alerta"
 
@@ -91,7 +98,6 @@ jobs:
                           print(f"Error procesando polígono: {e}")
 
               if poligono_afecta_ciudad:
-                  # Agregar marcadores de ciudades al mapa
                   for nombre, (lat, lon) in ciudades.items():
                       folium.Marker(
                           location=(lat, lon),
@@ -101,17 +107,25 @@ jobs:
                       ).add_to(mapa)
 
                   mapa.save("mapa_alerta.html")
-
-                  # Leer mapa generado y convertirlo a HTML inline
                   with open("mapa_alerta.html", "r", encoding="utf-8") as f:
                       html_mapa = f.read()
+
+                  descripcion_extra = descripciones_feed.get(xml_url, "(Sin descripción adicional)")
 
                   mensaje = EmailMessage()
                   mensaje["Subject"] = f"🚨 {evento} en {ciudad_afectada}"
                   mensaje["From"] = GMAIL_USER
                   mensaje["To"] = GMAIL_USER
-                  mensaje.set_content(f"Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.\n\n{descripcion}\n\nMapa disponible solo en HTML adjunto.")
-                  mensaje.add_alternative(html_mapa, subtype="html")
+                  mensaje.set_content(f"Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.\n\nDescripción:\n{descripcion_extra}\n\nEl mapa se incluye en la versión HTML del correo.")
+                  mensaje.add_alternative(f"""
+                  <html>
+                    <body>
+                      <p><strong>Se detectó una alerta meteorológica que afecta a {ciudad_afectada}.</strong></p>
+                      <p><strong>Descripción:</strong><br>{descripcion_extra}</p>
+                      {html_mapa}
+                    </body>
+                  </html>
+                  """, subtype="html")
 
                   try:
                       with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
