@@ -23,4 +23,3 @@ jobs:
 
       - name: Ejecutar script
         run: python alertas_smn.py
-        
