@@ -135,4 +135,8 @@ for xml_url in alert_links:
                 smtp.send_message(mensaje)
             print(f"✅ Correo enviado por alerta en {ciudad_afectada}")
         except Exception as e:
+<<<<<<< HEAD
             print(f"❌ Error al enviar correo: {e}")
+=======
+            print(f"❌ Error al enviar correo: {e}")
+>>>>>>> 0ab594f09e64c4e1971f6b85d4cb3baad7288f57
