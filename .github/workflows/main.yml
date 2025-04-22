@@ -22,4 +22,4 @@ jobs:
           pip install requests beautifulsoup4 shapely folium selenium undetected-chromedriver lxml
 
       - name: Ejecutar script
-        run: python .github/workflows/alertas_smn.py
+        run: python alertas/.github/workflows/alertas_smn.py
