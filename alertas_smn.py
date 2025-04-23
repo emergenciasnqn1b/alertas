@@ -42,7 +42,7 @@ def capturar_mapa():
     options.add_argument("--disable-dev-shm-usage")
 
     driver = uc.Chrome(options=options)
-    driver.set_window_size(600, 400)
+    driver.set_window_size(600, 600)
     driver.get("file://" + os.path.abspath("alerta_mapa.html"))
     time.sleep(3)
     driver.save_screenshot("alerta_mapa.png")
