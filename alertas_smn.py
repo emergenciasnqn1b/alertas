@@ -59,17 +59,20 @@ def enviar_mail(ciudad, descripcion):
         <body>
             <p><strong>Se detectó una alerta que afecta a {ciudad}.</strong></p>
             <p>{descripcion}</p>
-            <p><strong>Mapa de la alerta:</strong></p>
+            <p><strong>Mapa de la alerta (clickeable):</strong></p>
+            <a href="https://www.smn.gob.ar/alertas" target="_blank">
             <img src="cid:mapa_alerta" style="max-width: 100%; border: 1px solid #ccc;">
+            </a>
             <p style="margin-top: 20px;">
                 Más información oficial:<br>
                 <a href="https://www.smn.gob.ar/alertas" target="_blank">
                 https://www.smn.gob.ar/alertas
-                </a>
-            </p>
-        </body>
+            </a>
+        </p>
+    </body>
     </html>
     """
+
 
     parte_html = MIMEText(cuerpo_html, "html")
     mensaje.attach(parte_html)
