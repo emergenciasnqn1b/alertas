@@ -54,18 +54,17 @@ def enviar_mail(ciudad, descripcion):
     mensaje["From"] = GMAIL_USER
     mensaje["To"] = GMAIL_USER
 
-cuerpo_html = f"""
+    cuerpo_html = f"""
     <html>
         <body>
             <p><strong>Se detectó una alerta que afecta a {ciudad}.</strong></p>
             <p>{descripcion}</p>
             <a href="https://www.smn.gob.ar/alertas" target="_blank">
-            <img src="cid:mapa_alerta" style="max-width: 100%; border: 1px solid #ccc;">
+                <img src="cid:mapa_alerta" style="max-width: 100%; border: 1px solid #ccc;">
             </a>
         </body>
     </html>
     """
-
 
 
     parte_html = MIMEText(cuerpo_html, "html")
