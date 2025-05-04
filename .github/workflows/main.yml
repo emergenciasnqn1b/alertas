@@ -21,5 +21,12 @@ jobs:
           sudo apt-get install -y wget unzip python3-lxml python3-pip chromium
           pip install requests beautifulsoup4 shapely folium selenium undetected-chromedriver lxml
 
+      - name: Instalar ChromeDriver 135
+        run: |
+          wget -q https://edgedl.me.gvt1.com/edgedl/chrome/chromedriver/135.0.7049.0/chromedriver_linux64.zip
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
+
       - name: Ejecutar script
         run: python $GITHUB_WORKSPACE/alertas_smn.py
