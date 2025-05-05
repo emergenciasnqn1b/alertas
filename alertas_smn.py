@@ -3,12 +3,16 @@ import time
 import requests
 import smtplib
 import folium
-import undetected_chromedriver as uc
 from bs4 import BeautifulSoup
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from shapely.geometry import Point, Polygon
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Coordenadas de ciudades de interés
 ciudades = {
@@ -36,12 +40,12 @@ def generar_mapa(polygon_coords, ciudad_afectada):
     m.save("alerta_mapa.html")
 
 def capturar_mapa():
-    options = uc.ChromeOptions()
-    options.headless = True
+    options = Options()
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    driver = uc.Chrome(options=options, version_main=135)  # <--- Cambio agregado aquí
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.set_window_size(600, 600)
     driver.get("file://" + os.path.abspath("alerta_mapa.html"))
     time.sleep(3)
@@ -65,7 +69,6 @@ def enviar_mail(ciudad, descripcion):
         </body>
     </html>
     """
-
 
     parte_html = MIMEText(cuerpo_html, "html")
     mensaje.attach(parte_html)
