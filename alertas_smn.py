@@ -39,18 +39,26 @@ def generar_mapa(polygon_coords, ciudad_afectada):
                   icon=folium.Icon(color='red', icon='info-sign')).add_to(m)
     m.save("alerta_mapa.html")
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
+
 def capturar_mapa():
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+
     driver.set_window_size(600, 600)
     driver.get("file://" + os.path.abspath("alerta_mapa.html"))
     time.sleep(3)
     driver.save_screenshot("alerta_mapa.png")
     driver.quit()
+
 
 def enviar_mail(ciudad, descripcion):
     mensaje = MIMEMultipart("related")
