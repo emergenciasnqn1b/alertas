@@ -3,7 +3,8 @@ name: Alerta Meteorológica Automática
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    # - cron: '0 */2 * * *'
+    - cron: '* * * * *'
   workflow_dispatch:
 
 jobs:
