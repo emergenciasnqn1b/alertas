@@ -1,3 +1,4 @@
+# .github/workflows/alerta.yml
 name: Alerta Meteorológica Automática
 
 on:
@@ -25,11 +26,17 @@ jobs:
       - name: Instalar Chrome y ChromeDriver compatibles
         uses: browser-actions/setup-chrome@v1
         with:
-          chrome-version: stable     # instala la última Chrome estable
-          driver-version: stable     # instala el ChromeDriver que coincide
+          chrome-version: stable
+          driver-version: stable
+
+      - name: Verificar versiones (debug)
+        run: |
+          google-chrome --version
+          chromedriver --version
 
       - name: Ejecutar script de alertas
         run: python $GITHUB_WORKSPACE/alertas_smn.py
+
 
 
 
