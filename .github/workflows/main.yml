@@ -18,8 +18,11 @@ jobs:
       - name: Instalar dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium-browser python3-lxml python3-pip
-          pip install requests beautifulsoup4 shapely folium selenium webdriver-manager lxml
+          sudo apt-get install -y python3-lxml python3-pip unzip
+          pip install requests beautifulsoup4 shapely folium selenium lxml
+
+      - name: Instalar Google Chrome y ChromeDriver
+        uses: browser-actions/setup-chrome@v1
 
       - name: Ejecutar script
         run: python $GITHUB_WORKSPACE/alertas_smn.py
