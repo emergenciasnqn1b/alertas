@@ -13,18 +13,23 @@ jobs:
       GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Clonar repo
+        uses: actions/checkout@v3
 
-      - name: Instalar dependencias
+      - name: Instalar dependencias Python
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-lxml python3-pip unzip
-          pip install requests beautifulsoup4 shapely folium selenium lxml
+          sudo apt-get install -y python3-pip python3-lxml
+          pip install requests beautifulsoup4 shapely folium selenium webdriver-manager lxml
 
-      - name: Instalar Google Chrome y ChromeDriver
+      - name: Instalar Chrome y ChromeDriver compatibles
         uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable    # instala Chrome estable
+          driver-version: stable    # instala el ChromeDriver que coincide
 
-      - name: Ejecutar script
+      - name: Ejecutar script de alertas
         run: python $GITHUB_WORKSPACE/alertas_smn.py
+
 
 
