@@ -60,6 +60,7 @@ def capturar_mapa():
     driver.quit()
 
 
+
 def enviar_mail(ciudad, descripcion):
     mensaje = MIMEMultipart("related")
     mensaje["Subject"] = f"🚨 Alerta Meteorológica en {ciudad}"

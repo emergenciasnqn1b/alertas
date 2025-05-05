@@ -2,7 +2,7 @@ name: Alerta Meteorológica Automática
 
 on:
   schedule:
-    - cron: '0 */2 * * *'  # Cada 2 horas
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -13,15 +13,15 @@ jobs:
       GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
 
     steps:
-      - name: Clonar el repositorio
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Instalar dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium
+          sudo apt-get install -y chromium-browser python3-lxml python3-pip
           pip install requests beautifulsoup4 shapely folium selenium webdriver-manager lxml
 
-      - name: Ejecutar script de alerta
+      - name: Ejecutar script
         run: python $GITHUB_WORKSPACE/alertas_smn.py
+
 
