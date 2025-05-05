@@ -41,7 +41,7 @@ def capturar_mapa():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    driver = uc.Chrome(options=options)
+    driver = uc.Chrome(options=options, version_main=135)  # <--- Cambio agregado aquí
     driver.set_window_size(600, 600)
     driver.get("file://" + os.path.abspath("alerta_mapa.html"))
     time.sleep(3)
