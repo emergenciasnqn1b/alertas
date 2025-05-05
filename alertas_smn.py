@@ -40,9 +40,9 @@ def generar_mapa(polygon_coords, ciudad_afectada):
     m.save("alerta_mapa.html")
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
 
 def capturar_mapa():
     options = Options()
